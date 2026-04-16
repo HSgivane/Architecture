@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Заметки{% endblock %}
+{% block content %}
+<h2>Заметки</h2>
+
+{% if session.get('role') in ['moderator', 'admin'] %}
+    <a href="{{ url_for('notes_create') }}">Создать заметку</a>
+{% endif %}
+
+<ul>
+{% for note in notes %}
+    <li>
+        <strong>{{ note["title"] }}</strong><br>
+        {{ note["content"] }}<br>
+        Автор: {{ note["author_name"] or "неизвестно" }}<br>
+
+        {% if session.get('role') in ['moderator', 'admin'] %}
+            <a href="{{ url_for('notes_edit', note_id=note['id']) }}">Редактировать</a>
+            <form method="post" action="{{ url_for('notes_delete', note_id=note['id']) }}" style="display:inline;">
+                <button type="submit">Удалить</button>
+            </form>
+        {% endif %}
+    </li>
+    <hr>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Изменение роли{% endblock %}
+{% block content %}
+<h2>Изменить роль пользователя {{ user["username"] }}</h2>
+
+<form method="post">
+    <select name="role">
+        <option value="viewer" {% if user["role"] == "viewer" %}selected{% endif %}>viewer</option>
+        <option value="moderator" {% if user["role"] == "moderator" %}selected{% endif %}>moderator</option>
+        <option value="admin" {% if user["role"] == "admin" %}selected{% endif %}>admin</option>
+    </select>
+    <button type="submit">Сохранить</button>
+</form>
+{% endblock %}

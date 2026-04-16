@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Заметка{% endblock %}
+{% block content %}
+<h2>{% if mode == "create" %}Создать{% else %}Редактировать{% endif %} заметку</h2>
+
+<form method="post">
+    <input name="title" placeholder="Заголовок" value="{{ note['title'] if note else '' }}">
+    <br>
+    <textarea name="content" placeholder="Текст">{{ note['content'] if note else '' }}</textarea>
+    <br>
+    <button type="submit">Сохранить</button>
+</form>
+{% endblock %}
