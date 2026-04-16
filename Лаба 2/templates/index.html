@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>ЭЦП — Электронная цифровая подпись</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; font-size: 14px; background: #f7f7f5; color: #1a1a1a; }
+
+    nav {
+      background: #1a1a1a; color: #f7f7f5;
+      padding: 12px 32px; font-size: 14px;
+    }
+
+    .container { max-width: 680px; margin: 40px auto; padding: 0 16px; }
+
+    h2 { font-size: 16px; margin-bottom: 20px; }
+    h3 { font-size: 13px; color: #888; font-weight: normal; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
+
+    .block {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+
+    textarea, input[type="text"] {
+      font-family: monospace; font-size: 13px;
+      width: 100%; padding: 7px 10px;
+      border: 1px solid #ccc; border-radius: 4px;
+      background: #fafafa; margin-bottom: 10px;
+      outline: none; resize: vertical;
+    }
+    textarea:focus, input:focus { border-color: #1a1a1a; background: #fff; }
+
+    button {
+      font-family: monospace; font-size: 13px;
+      padding: 7px 16px; background: #1a1a1a; color: #f7f7f5;
+      border: none; border-radius: 4px; cursor: pointer;
+      margin-right: 8px; margin-bottom: 8px;
+    }
+    button:hover { background: #333; }
+    button.secondary {
+      background: transparent; color: #1a1a1a;
+      border: 1px solid #ccc;
+    }
+    button.secondary:hover { background: #eee; }
+
+    .result {
+      margin-top: 12px; padding: 10px 12px;
+      border-radius: 4px; font-size: 13px;
+      display: none;
+    }
+    .result.ok  { background: #eafaf1; border: 1px solid #a9dfbf; color: #1e8449; }
+    .result.err { background: #fdecea; border: 1px solid #f1948a; color: #c0392b; }
+
+    hr { border: none; border-top: 1px solid #e5e5e5; margin: 24px 0; }
+
+    /* Log table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #e5e5e5; }
+    th { font-size: 11px; color: #888; font-weight: normal; }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 3px; font-size: 11px;
+    }
+    .badge.ok  { background: #eafaf1; color: #1e8449; }
+    .badge.err { background: #fdecea; color: #c0392b; }
+  </style>
+</head>
+<body>
+
+<nav>eds — электронная цифровая подпись</nav>
+
+<div class="container">
+
+  <!-- Сценарий 1 -->
+  <div class="block">
+    <h3>Сценарий 1 — клиент подписывает, сервер проверяет</h3>
+
+    <label>Сообщение</label>
+    <textarea id="s1-message" rows="3" placeholder="Введите любое сообщение..."></textarea>
+
+    <div id="s1-keys" style="display:none;">
+      <label>Подпись (base64)</label>
+      <textarea id="s1-sig" rows="3" readonly></textarea>
+      <label>Публичный ключ (PEM)</label>
+      <textarea id="s1-pub" rows="5" readonly></textarea>
+    </div>
+
+    <button onclick="s1Generate()">1. Сгенерировать ключи и подписать</button>
+    <button class="secondary" onclick="s1Verify()" id="s1-verify-btn" style="display:none;">2. Отправить на сервер</button>
+
+    <div id="s1-result" class="result"></div>
+  </div>
+
+  <!-- Сценарий 2 -->
+  <div class="block">
+    <h3>Сценарий 2 — сервер подписывает, клиент проверяет</h3>
+
+    <button onclick="s2GetKey()">1. Получить публичный ключ сервера</button>
+    <button class="secondary" onclick="s2GetMessage()" id="s2-sign-btn" style="display:none;">2. Запросить подписанное сообщение</button>
+    <button class="secondary" onclick="s2Verify()" id="s2-verify-btn" style="display:none;">3. Проверить подпись</button>
+
+    <div id="s2-info" style="display:none; margin-top:12px;">
+      <label>Сообщение от сервера</label>
+      <input type="text" id="s2-message" readonly>
+      <label>Подпись (base64)</label>
+      <textarea id="s2-sig" rows="3" readonly></textarea>
+    </div>
+
+    <div id="s2-result" class="result"></div>
+  </div>
+
+  <!-- Лог -->
+  <h2>История проверок</h2>
+  <div class="block" style="padding:0; overflow:hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th>Время</th>
+          <th>Сценарий</th>
+          <th>Сообщение</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in messages %}
+        <tr>
+          <td>{{ m["created_at"] }}</td>
+          <td>{{ m["scenario"] }}</td>
+          <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ m["message"] }}</td>
+          <td>
+            <span class="badge {{ 'ok' if m['verified'] else 'err' }}">
+              {{ 'ОК' if m['verified'] else 'FAIL' }}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="color:#888;">Пока пусто</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// ── Сценарий 1 ────────────────────────────────────────────────────────────────
+
+let s1PrivKey = null;
+
+async function s1Generate() {
+  const msg = document.getElementById("s1-message").value.trim();
+  if (!msg) return alert("Введите сообщение");
+
+  // Генерация RSA ключей в браузере
+  const keyPair = await crypto.subtle.generateKey(
+    { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1,0,1]), hash: "SHA-256" },
+    true, ["sign", "verify"]
+  );
+  s1PrivKey = keyPair.privateKey;
+
+  // Подпись
+  const encoded = new TextEncoder().encode(msg);
+  const sigBuf  = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", keyPair.privateKey, encoded);
+  const sigB64  = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+
+  // Экспорт публичного ключа в PEM
+  const pubDer  = await crypto.subtle.exportKey("spki", keyPair.publicKey);
+  const pubB64  = btoa(String.fromCharCode(...new Uint8Array(pubDer)));
+  const pem     = `-----BEGIN PUBLIC KEY-----\n${pubB64.match(/.{1,64}/g).join("\n")}\n-----END PUBLIC KEY-----`;
+
+  document.getElementById("s1-sig").value = sigB64;
+  document.getElementById("s1-pub").value = pem;
+  document.getElementById("s1-keys").style.display = "block";
+  document.getElementById("s1-verify-btn").style.display = "inline-block";
+  showResult("s1-result", "", "");
+}
+
+async function s1Verify() {
+  const resp = await fetch("/verify-client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message:    document.getElementById("s1-message").value,
+      signature:  document.getElementById("s1-sig").value,
+      public_key: document.getElementById("s1-pub").value,
+    })
+  });
+  const data = await resp.json();
+  if (data.error) return showResult("s1-result", "err", "Ошибка: " + data.error);
+  showResult("s1-result", data.verified ? "ok" : "err",
+    data.verified ? "✓ Подпись верна — сервер подтвердил подлинность" : "✗ Подпись недействительна");
+  setTimeout(() => location.reload(), 1500);
+}
+
+// ── Сценарий 2 ────────────────────────────────────────────────────────────────
+
+let s2PubKey = null;
+
+async function s2GetKey() {
+  const resp = await fetch("/server/public-key");
+  const data = await resp.json();
+
+  // Импортируем PEM публичный ключ
+  const b64 = data.public_key.replace(/-----[^-]+-----/g, "").replace(/\s/g, "");
+  const der  = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  s2PubKey = await crypto.subtle.importKey(
+    "spki", der,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false, ["verify"]
+  );
+
+  showResult("s2-result", "ok", "✓ Публичный ключ сервера получен");
+  document.getElementById("s2-sign-btn").style.display = "inline-block";
+}
+
+async function s2GetMessage() {
+  const resp = await fetch("/server/sign");
+  const data = await resp.json();
+  document.getElementById("s2-message").value = data.message;
+  document.getElementById("s2-sig").value     = data.signature;
+  document.getElementById("s2-info").style.display = "block";
+  document.getElementById("s2-verify-btn").style.display = "inline-block";
+  showResult("s2-result", "", "");
+}
+
+async function s2Verify() {
+  const msg = document.getElementById("s2-message").value;
+  const sig = document.getElementById("s2-sig").value;
+
+  const sigBuf  = Uint8Array.from(atob(sig), c => c.charCodeAt(0));
+  const encoded = new TextEncoder().encode(msg);
+  const ok      = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", s2PubKey, sigBuf, encoded);
+
+  showResult("s2-result", ok ? "ok" : "err",
+    ok ? "✓ Подпись верна — сообщение подлинное" : "✗ Подпись не прошла проверку");
+  setTimeout(() => location.reload(), 1500);
+}
+
+// ── Хелпер ───────────────────────────────────────────────────────────────────
+
+function showResult(id, cls, text) {
+  const el = document.getElementById(id);
+  el.className = "result " + cls;
+  el.textContent = text;
+  el.style.display = text ? "block" : "none";
+}
+</script>
+
+</body>
+</html>
