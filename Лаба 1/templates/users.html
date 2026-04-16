@@ -2,12 +2,22 @@
 {% block title %}Пользователи{% endblock %}
 {% block content %}
 <h2>Пользователи</h2>
-<ul>
-{% for user in users %}
-    <li>
-        {{ user["username"] }} — {{ user["role"] }}
-        <a href="{{ url_for('admin_edit_user', user_id=user['id']) }}">Изменить роль</a>
-    </li>
-{% endfor %}
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th>Логин</th>
+            <th>Роль</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user["username"] }}</td>
+            <td>{{ user["role"] }}</td>
+            <td><a href="{{ url_for('admin_edit_user', user_id=user['id']) }}" class="btn btn-secondary">Изменить роль</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

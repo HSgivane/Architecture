@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Главная{% endblock %}
 {% block content %}
-<h1>Notebook App</h1>
-<p>Приложение с трёхзвенной архитектурой: клиент, сервер приложений, SQLite БД.</p>
+<h2>Notebook App</h2>
+<p style="color:#888; line-height:1.6;">
+    Приложение с трёхзвенной архитектурой: клиент, сервер приложений, SQLite БД.
+</p>
+<br>
+<a href="{{ url_for('notes') }}" class="btn">Открыть заметки →</a>
 {% endblock %}

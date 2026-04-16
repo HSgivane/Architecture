@@ -2,35 +2,174 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>{% block title %}Notebook App{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Notebook{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: monospace;
+            font-size: 14px;
+            background: #f7f7f5;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #1a1a1a;
+            color: #f7f7f5;
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        nav a {
+            color: #f7f7f5;
+            text-decoration: none;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+
+        nav a:hover { opacity: 1; }
+
+        nav .spacer { flex: 1; }
+
+        nav .user {
+            opacity: 0.5;
+            font-size: 12px;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 24px;
+        }
+
+        /* Forms */
+        input, textarea, select {
+            font-family: monospace;
+            font-size: 14px;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            width: 100%;
+            margin-bottom: 10px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #1a1a1a;
+        }
+
+        textarea { resize: vertical; min-height: 100px; }
+
+        button, .btn {
+            font-family: monospace;
+            font-size: 14px;
+            padding: 7px 16px;
+            background: #1a1a1a;
+            color: #f7f7f5;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.15s;
+        }
+
+        button:hover, .btn:hover { background: #333; }
+
+        .btn-danger {
+            background: transparent;
+            color: #c0392b;
+            border: 1px solid #c0392b;
+        }
+
+        .btn-danger:hover { background: #c0392b; color: #fff; }
+
+        .btn-secondary {
+            background: transparent;
+            color: #1a1a1a;
+            border: 1px solid #ccc;
+        }
+
+        .btn-secondary:hover { background: #eee; }
+
+        /* Flash messages */
+        .flashes {
+            margin-bottom: 20px;
+        }
+
+        .flashes li {
+            list-style: none;
+            background: #fff3cd;
+            border: 1px solid #f0c040;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; }
+        th { font-size: 12px; color: #888; font-weight: normal; }
+
+        /* Note card */
+        .note { padding: 14px 0; border-bottom: 1px solid #e5e5e5; }
+        .note:last-child { border-bottom: none; }
+        .note-title { font-weight: bold; margin-bottom: 4px; }
+        .note-meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+        .note-content { margin-bottom: 10px; line-height: 1.5; }
+        .note-actions { display: flex; gap: 8px; }
+
+        hr { border: none; border-top: 1px solid #e5e5e5; margin: 20px 0; }
+
+        label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+
+        .form-group { margin-bottom: 14px; }
+    </style>
 </head>
 <body>
-    <nav>
-        <a href="{{ url_for('index') }}">Главная</a> |
-        <a href="{{ url_for('notes') }}">Заметки</a> |
-        {% if session.get('role') == 'admin' %}
-            <a href="{{ url_for('users') }}">Пользователи</a> |
-        {% endif %}
-        {% if session.get('user_id') %}
-            <span>{{ session.get('username') }} ({{ session.get('role') }})</span> |
-            <a href="{{ url_for('logout') }}">Выйти</a>
-        {% else %}
-            <a href="{{ url_for('login') }}">Войти</a> |
-            <a href="{{ url_for('register') }}">Регистрация</a>
-        {% endif %}
-    </nav>
-    <hr>
 
+<nav>
+    <a href="{{ url_for('index') }}">notebook</a>
+    <a href="{{ url_for('notes') }}">заметки</a>
+    {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('users') }}">пользователи</a>
+    {% endif %}
+    <div class="spacer"></div>
+    {% if session.get('user_id') %}
+        <span class="user">{{ session.get('username') }} · {{ session.get('role') }}</span>
+        <a href="{{ url_for('logout') }}">выйти</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">войти</a>
+        <a href="{{ url_for('register') }}">регистрация</a>
+    {% endif %}
+</nav>
+
+<div class="container">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
+            <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
             </ul>
         {% endif %}
     {% endwith %}
 
     {% block content %}{% endblock %}
+</div>
+
 </body>
 </html>

@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Заметка{% endblock %}
 {% block content %}
-<h2>{% if mode == "create" %}Создать{% else %}Редактировать{% endif %} заметку</h2>
-
-<form method="post">
-    <input name="title" placeholder="Заголовок" value="{{ note['title'] if note else '' }}">
-    <br>
-    <textarea name="content" placeholder="Текст">{{ note['content'] if note else '' }}</textarea>
-    <br>
+<h2>{% if mode == "create" %}Создать заметку{% else %}Редактировать заметку{% endif %}</h2>
+<form method="post" style="max-width: 480px;">
+    <div class="form-group">
+        <label>Заголовок</label>
+        <input name="title" placeholder="Заголовок" value="{{ note['title'] if note else '' }}">
+    </div>
+    <div class="form-group">
+        <label>Текст</label>
+        <textarea name="content" placeholder="Текст заметки...">{{ note['content'] if note else '' }}</textarea>
+    </div>
     <button type="submit">Сохранить</button>
+    <a href="{{ url_for('notes') }}" class="btn btn-secondary" style="margin-left:8px;">Отмена</a>
 </form>
 {% endblock %}

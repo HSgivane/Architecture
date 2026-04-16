@@ -1,27 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Заметки{% endblock %}
 {% block content %}
-<h2>Заметки</h2>
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <h2 style="margin:0;">Заметки</h2>
+    {% if session.get('role') in ['moderator', 'admin'] %}
+        <a href="{{ url_for('notes_create') }}" class="btn">+ Создать</a>
+    {% endif %}
+</div>
 
-{% if session.get('role') in ['moderator', 'admin'] %}
-    <a href="{{ url_for('notes_create') }}">Создать заметку</a>
-{% endif %}
-
-<ul>
-{% for note in notes %}
-    <li>
-        <strong>{{ note["title"] }}</strong><br>
-        {{ note["content"] }}<br>
-        Автор: {{ note["author_name"] or "неизвестно" }}<br>
-
+{% if notes %}
+    {% for note in notes %}
+    <div class="note">
+        <div class="note-title">{{ note["title"] }}</div>
+        <div class="note-meta">Автор: {{ note["author_name"] or "неизвестно" }}</div>
+        <div class="note-content">{{ note["content"] }}</div>
         {% if session.get('role') in ['moderator', 'admin'] %}
-            <a href="{{ url_for('notes_edit', note_id=note['id']) }}">Редактировать</a>
-            <form method="post" action="{{ url_for('notes_delete', note_id=note['id']) }}" style="display:inline;">
-                <button type="submit">Удалить</button>
+        <div class="note-actions">
+            <a href="{{ url_for('notes_edit', note_id=note['id']) }}" class="btn btn-secondary">Редактировать</a>
+            <form method="post" action="{{ url_for('notes_delete', note_id=note['id']) }}">
+                <button type="submit" class="btn btn-danger">Удалить</button>
             </form>
+        </div>
         {% endif %}
-    </li>
-    <hr>
-{% endfor %}
-</ul>
+    </div>
+    {% endfor %}
+{% else %}
+    <p style="color:#888;">Заметок пока нет.</p>
+{% endif %}
 {% endblock %}
